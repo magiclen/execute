@@ -238,7 +238,6 @@ use std::process::{Command, Stdio};
 
 use execute::{Execute, shell};
 
-# if cfg!(target_os = "linux") {
 let mut command = shell("cat /proc/meminfo");
 
 command.stdout(Stdio::piped());
@@ -246,7 +245,6 @@ command.stdout(Stdio::piped());
 let output = command.execute_output().unwrap();
 
 println!("{}", String::from_utf8(output.stdout).unwrap());
-# }
 ```
 
 ### Parse a Command String
@@ -260,7 +258,6 @@ use std::process::{Command, Stdio};
 
 use execute::{Execute, command};
 
-# if cfg!(target_os = "linux") {
 let mut command = command("cat '/proc/meminfo'");
 
 command.stdout(Stdio::piped());
@@ -268,7 +265,6 @@ command.stdout(Stdio::piped());
 let output = command.execute_output().unwrap();
 
 println!("{}", String::from_utf8(output.stdout).unwrap());
-# }
 ```
 
 ## Crates.io
