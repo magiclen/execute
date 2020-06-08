@@ -3,7 +3,7 @@ Execute
 
 [![Build Status](https://travis-ci.org/magiclen/execute.svg?branch=master)](https://travis-ci.org/magiclen/execute)
 
-This library is for extending `Command` in order to execute programs more easily.
+This library is used for extending `Command` in order to execute programs more easily.
 
 ## Usage
 
@@ -225,6 +225,50 @@ command3.stdout(Stdio::piped());
 let output = command1.execute_multiple_output(&mut [&mut command2, &mut command3]).unwrap();
 
 assert_eq!(b"hello\n", output.stdout.as_slice());
+```
+
+### Run a Command String in the Current Shell
+
+The `shell` function can be used to create a `Command` instance with a single command string instead of a program name and scattered arguments.
+
+```rust
+extern crate execute;
+
+use std::process::{Command, Stdio};
+
+use execute::{Execute, shell};
+
+# if cfg!(target_os = "linux") {
+let mut command = shell("cat /proc/meminfo");
+
+command.stdout(Stdio::piped());
+
+let output = command.execute_output().unwrap();
+
+println!("{}", String::from_utf8(output.stdout).unwrap());
+# }
+```
+
+### Parse a Command String
+
+The `command` function can be used to create a `Command` instance with a single command string instead of a program name and scattered arguments. The difference between the `shell` function and the `command` function is that the former is interpreted by the current shell while the latter is parsed by this crate.
+
+```rust
+extern crate execute;
+
+use std::process::{Command, Stdio};
+
+use execute::{Execute, command};
+
+# if cfg!(target_os = "linux") {
+let mut command = command("cat '/proc/meminfo'");
+
+command.stdout(Stdio::piped());
+
+let output = command.execute_output().unwrap();
+
+println!("{}", String::from_utf8(output.stdout).unwrap());
+# }
 ```
 
 ## Crates.io

@@ -1,7 +1,7 @@
 /*!
 # Execute
 
-This library is for extending `Command` in order to execute programs more easily.
+This library is used for extending `Command` in order to execute programs more easily.
 
 ## Usage
 
@@ -232,12 +232,59 @@ let output = command1.execute_multiple_output(&mut [&mut command2, &mut command3
 assert_eq!(b"hello\n", output.stdout.as_slice());
 # }
 ```
+
+### Run a Command String in the Current Shell
+
+The `shell` function can be used to create a `Command` instance with a single command string instead of a program name and scattered arguments.
+
+```rust
+extern crate execute;
+
+use std::process::{Command, Stdio};
+
+use execute::{Execute, shell};
+
+# if cfg!(target_os = "linux") {
+let mut command = shell("cat /proc/meminfo");
+
+command.stdout(Stdio::piped());
+
+let output = command.execute_output().unwrap();
+
+println!("{}", String::from_utf8(output.stdout).unwrap());
+# }
+```
+
+### Parse a Command String
+
+The `command` function can be used to create a `Command` instance with a single command string instead of a program name and scattered arguments. The difference between the `shell` function and the `command` function is that the former is interpreted by the current shell while the latter is parsed by this crate.
+
+```rust
+extern crate execute;
+
+use std::process::{Command, Stdio};
+
+use execute::{Execute, command};
+
+# if cfg!(target_os = "linux") {
+let mut command = command("cat '/proc/meminfo'");
+
+command.stdout(Stdio::piped());
+
+let output = command.execute_output().unwrap();
+
+println!("{}", String::from_utf8(output.stdout).unwrap());
+# }
+```
 */
 
 pub extern crate generic_array;
 
+use std::env;
+use std::ffi::{OsStr, OsString};
 use std::io::{self, ErrorKind, Read, Write};
 use std::process::{Command, Output, Stdio};
+use std::sync::Once;
 
 use generic_array::typenum::{IsGreaterOrEqual, True, U1, U256};
 use generic_array::{ArrayLength, GenericArray};
@@ -687,5 +734,113 @@ impl Execute for Command {
         last_other.stdin(child.stdout.unwrap());
 
         last_other.spawn()?.wait_with_output()
+    }
+}
+
+/// Create a `Command` instance which can be executed by the current command language interpreter (shell).
+#[cfg(unix)]
+pub fn shell<S: AsRef<OsStr>>(cmd: S) -> Command {
+    static START: Once = Once::new();
+    static mut SHELL: Option<OsString> = None;
+
+    let shell = unsafe {
+        START.call_once(|| {
+            SHELL = Some(env::var_os("SHELL").unwrap_or_else(|| OsString::from(String::from("sh"))))
+        });
+
+        SHELL.as_ref().unwrap()
+    };
+
+    let mut command = Command::new(shell);
+
+    command.arg("-c");
+    command.arg(cmd);
+
+    command
+}
+
+/// Create a `Command` instance which can be executed by the current command language interpreter (shell).
+#[cfg(windows)]
+pub fn shell<S: AsRef<OsStr>>(cmd: S) -> Command {
+    let mut command = Command::new("cmd.exe");
+
+    command.arg("/c");
+    command.arg(cmd);
+
+    command
+}
+
+/// Create a `Command` instance by parsing a command string.
+pub fn command<S: AsRef<str>>(cmd: S) -> Command {
+    let cmd = cmd.as_ref();
+
+    let mut tokens = Vec::with_capacity(1);
+    let mut string_buffer = String::new();
+
+    let mut append_mode = false;
+    let mut quote_mode = false;
+    let mut quote_mode_ending = false; // to deal with '123''456' -> 123456
+    let mut quote_char = ' ';
+
+    for c in cmd.chars() {
+        if c.is_whitespace() {
+            if append_mode {
+                if quote_mode {
+                    string_buffer.push(c);
+                } else {
+                    append_mode = false;
+
+                    tokens.push(string_buffer);
+                    string_buffer = String::new();
+                }
+            } else if quote_mode_ending {
+                quote_mode_ending = false;
+
+                tokens.push(string_buffer);
+                string_buffer = String::new();
+            }
+        } else {
+            match c {
+                '"' | '\'' => {
+                    if append_mode {
+                        if quote_mode {
+                            if quote_char == c {
+                                append_mode = false;
+                                quote_mode = false;
+                                quote_mode_ending = true;
+                            } else {
+                                string_buffer.push(c);
+                            }
+                        } else {
+                            quote_mode = true;
+                            quote_char = c;
+                        }
+                    } else {
+                        append_mode = true;
+                        quote_mode = true;
+                        quote_char = c;
+                    }
+                }
+                _ => {
+                    append_mode = true;
+
+                    string_buffer.push(c);
+                }
+            }
+        }
+    }
+
+    if append_mode || quote_mode_ending {
+        tokens.push(string_buffer);
+    }
+
+    if tokens.is_empty() {
+        Command::new("")
+    } else {
+        let mut command = Command::new(&tokens[0]);
+
+        command.args(&tokens[1..]);
+
+        command
     }
 }

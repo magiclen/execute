@@ -6,7 +6,7 @@ edition = "2018"
 repository = "https://github.com/magiclen/execute"
 homepage = "https://magiclen.org/execute"
 keywords = ["execute", "redirect", "process", "command", "pipe"]
-categories = []
+categories = ["parser-implementations"]
 description= "A library for extending `Command` in order to execute programs more easily."
 readme = "README.md"
 license = "MIT"
@@ -17,3 +17,6 @@ branch = "master"
 
 [dependencies]
 generic-array = "0.14.1"
+
+[features]
+nightly = []
