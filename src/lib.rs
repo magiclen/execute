@@ -789,54 +789,52 @@ pub fn command<S: AsRef<str>>(cmd: S) -> Command {
             escaping = false;
 
             string_buffer.push(c);
-        } else {
-            if c.is_whitespace() {
-                if append_mode {
-                    if quote_mode {
-                        string_buffer.push(c);
-                    } else {
-                        append_mode = false;
-
-                        tokens.push(string_buffer);
-                        string_buffer = String::new();
-                    }
-                } else if quote_mode_ending {
-                    quote_mode_ending = false;
+        } else if c.is_whitespace() {
+            if append_mode {
+                if quote_mode {
+                    string_buffer.push(c);
+                } else {
+                    append_mode = false;
 
                     tokens.push(string_buffer);
                     string_buffer = String::new();
                 }
-            } else {
-                match c {
-                    '"' | '\'' => {
-                        if append_mode {
-                            if quote_mode {
-                                if quote_char == c {
-                                    append_mode = false;
-                                    quote_mode = false;
-                                    quote_mode_ending = true;
-                                } else {
-                                    string_buffer.push(c);
-                                }
+            } else if quote_mode_ending {
+                quote_mode_ending = false;
+
+                tokens.push(string_buffer);
+                string_buffer = String::new();
+            }
+        } else {
+            match c {
+                '"' | '\'' => {
+                    if append_mode {
+                        if quote_mode {
+                            if quote_char == c {
+                                append_mode = false;
+                                quote_mode = false;
+                                quote_mode_ending = true;
                             } else {
-                                quote_mode = true;
-                                quote_char = c;
+                                string_buffer.push(c);
                             }
                         } else {
-                            append_mode = true;
                             quote_mode = true;
                             quote_char = c;
                         }
-                    }
-                    '\\' => {
-                        escaping = true;
-                    }
-                    _ => {
+                    } else {
                         append_mode = true;
-                        escaping = false;
-
-                        string_buffer.push(c);
+                        quote_mode = true;
+                        quote_char = c;
                     }
+                }
+                '\\' => {
+                    escaping = true;
+                }
+                _ => {
+                    append_mode = true;
+                    escaping = false;
+
+                    string_buffer.push(c);
                 }
             }
         }
