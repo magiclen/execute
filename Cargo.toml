@@ -1,0 +1,19 @@
+[package]
+name = "execute"
+version = "0.1.0"
+authors = ["Magic Len <len@magiclen.org>"]
+edition = "2018"
+repository = "https://github.com/magiclen/execute"
+homepage = "https://magiclen.org/execute"
+keywords = ["execute", "redirect", "process", "command", "pipe"]
+categories = []
+description= "A library for extending `Command` in order to execute programs more easily."
+readme = "README.md"
+license = "MIT"
+
+[badges.travis-ci]
+repository = "magiclen/execute"
+branch = "master"
+
+[dependencies]
+generic-array = "0.14.1"
