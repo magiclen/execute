@@ -206,7 +206,7 @@ println!("{}", String::from_utf8(output.stdout).unwrap());
 # }
 ```
 
-### Execute Many Commands and Pipe Them Together
+### Execute Multiple Commands and Pipe Them Together
 
 ```rust
 extern crate execute;
@@ -227,7 +227,7 @@ command3.arg("A-Z").arg("a-z");
 
 command3.stdout(Stdio::piped());
 
-let output = command1.execute_many_output(&mut [&mut command2, &mut command3]).unwrap();
+let output = command1.execute_multiple_output(&mut [&mut command2, &mut command3]).unwrap();
 
 assert_eq!(b"hello\n", output.stdout.as_slice());
 # }
@@ -297,23 +297,24 @@ pub trait Execute {
         reader: &mut dyn Read,
     ) -> Result<Output, io::Error>;
 
-    /// TODO execute_many
+    /// TODO execute_multiple
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and get the exit status code. The stdin of the first process will be set to `Stdio::inherit()`. The stdout and stderr of the last process will be set to `Stdio::null()`.
-    fn execute_many(&mut self, others: &mut [&mut Command]) -> Result<Option<i32>, io::Error>;
+    fn execute_multiple(&mut self, others: &mut [&mut Command]) -> Result<Option<i32>, io::Error>;
 
     /// Execute this command as well as other commands and pipe their stdin and stdout. The stdin of the first process will be set to `Stdio::inherit()`. By default, the stdout and stderr of the last process are inherited from the parent.
-    fn execute_many_output(&mut self, others: &mut [&mut Command]) -> Result<Output, io::Error>;
+    fn execute_multiple_output(&mut self, others: &mut [&mut Command])
+        -> Result<Output, io::Error>;
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input in-memory data to the process, and get the exit status code. The stdin of the first process will be set to `Stdio::piped()`. The stdout and stderr of the last process will be set to `Stdio::null()`.
-    fn execute_many_input<D: ?Sized + AsRef<[u8]>>(
+    fn execute_multiple_input<D: ?Sized + AsRef<[u8]>>(
         &mut self,
         data: &D,
         others: &mut [&mut Command],
     ) -> Result<Option<i32>, io::Error>;
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input in-memory data to the process. The stdin of the first process will be set to `Stdio::piped()`. By default, the stdout and stderr of the last process are inherited from the parent.
-    fn execute_many_input_output<D: ?Sized + AsRef<[u8]>>(
+    fn execute_multiple_input_output<D: ?Sized + AsRef<[u8]>>(
         &mut self,
         data: &D,
         others: &mut [&mut Command],
@@ -321,16 +322,16 @@ pub trait Execute {
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input data from a reader to the process, and get the exit status code. The stdin of the first process will be set to `Stdio::piped()`. The stdout and stderr of the last process will be set to `Stdio::null()`.
     #[inline]
-    fn execute_many_input_reader(
+    fn execute_multiple_input_reader(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
     ) -> Result<Option<i32>, io::Error> {
-        self.execute_many_input_reader2::<U256>(reader, others)
+        self.execute_multiple_input_reader2::<U256>(reader, others)
     }
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input data from a reader to the process, and get the exit status code. The stdin of the first process will be set to `Stdio::piped()`. The stdout and stderr of the last process will be set to `Stdio::null()`.
-    fn execute_many_input_reader2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_multiple_input_reader2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
@@ -338,16 +339,18 @@ pub trait Execute {
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input data from a reader to the process. The stdin of the first process will be set to `Stdio::piped()`. By default, the stdout and stderr of the last process are inherited from the parent.
     #[inline]
-    fn execute_many_input_reader_output(
+    fn execute_multiple_input_reader_output(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
     ) -> Result<Output, io::Error> {
-        self.execute_many_input_reader_output2::<U256>(reader, others)
+        self.execute_multiple_input_reader_output2::<U256>(reader, others)
     }
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input data from a reader to the process. The stdin of the first process will be set to `Stdio::piped()`. By default, the stdout and stderr of the last process are inherited from the parent.
-    fn execute_many_input_reader_output2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_multiple_input_reader_output2<
+        N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>,
+    >(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
@@ -457,7 +460,7 @@ impl Execute for Command {
         child.wait_with_output()
     }
 
-    fn execute_many(&mut self, others: &mut [&mut Command]) -> Result<Option<i32>, io::Error> {
+    fn execute_multiple(&mut self, others: &mut [&mut Command]) -> Result<Option<i32>, io::Error> {
         if others.is_empty() {
             return self.execute();
         }
@@ -487,7 +490,10 @@ impl Execute for Command {
         Ok(last_other.status()?.code())
     }
 
-    fn execute_many_output(&mut self, others: &mut [&mut Command]) -> Result<Output, io::Error> {
+    fn execute_multiple_output(
+        &mut self,
+        others: &mut [&mut Command],
+    ) -> Result<Output, io::Error> {
         if others.is_empty() {
             return self.execute_output();
         }
@@ -515,7 +521,7 @@ impl Execute for Command {
         last_other.spawn()?.wait_with_output()
     }
 
-    fn execute_many_input<D: ?Sized + AsRef<[u8]>>(
+    fn execute_multiple_input<D: ?Sized + AsRef<[u8]>>(
         &mut self,
         data: &D,
         others: &mut [&mut Command],
@@ -551,7 +557,7 @@ impl Execute for Command {
         Ok(last_other.status()?.code())
     }
 
-    fn execute_many_input_output<D: ?Sized + AsRef<[u8]>>(
+    fn execute_multiple_input_output<D: ?Sized + AsRef<[u8]>>(
         &mut self,
         data: &D,
         others: &mut [&mut Command],
@@ -585,7 +591,7 @@ impl Execute for Command {
         last_other.spawn()?.wait_with_output()
     }
 
-    fn execute_many_input_reader2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_multiple_input_reader2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
@@ -634,7 +640,7 @@ impl Execute for Command {
         Ok(last_other.status()?.code())
     }
 
-    fn execute_many_input_reader_output2<
+    fn execute_multiple_input_reader_output2<
         N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>,
     >(
         &mut self,

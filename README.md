@@ -202,7 +202,7 @@ let output = cat_command.execute_input_reader_output2::<U4096>(&mut file).unwrap
 println!("{}", String::from_utf8(output.stdout).unwrap());
 ```
 
-### Execute Many Commands and Pipe Them Together
+### Execute Multiple Commands and Pipe Them Together
 
 ```rust
 extern crate execute;
@@ -222,7 +222,7 @@ command3.arg("A-Z").arg("a-z");
 
 command3.stdout(Stdio::piped());
 
-let output = command1.execute_many_output(&mut [&mut command2, &mut command3]).unwrap();
+let output = command1.execute_multiple_output(&mut [&mut command2, &mut command3]).unwrap();
 
 assert_eq!(b"hello\n", output.stdout.as_slice());
 ```
