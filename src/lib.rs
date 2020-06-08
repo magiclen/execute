@@ -146,7 +146,7 @@ use std::process::{Command, Stdio};
 
 use execute::Execute;
 
-# if cfg!(unix) {
+# if cfg!(target_os = "linux") {
 let mut bc_command = Command::new("bc");
 
 bc_command.stdout(Stdio::piped());
@@ -167,7 +167,7 @@ use std::fs::File;
 
 use execute::Execute;
 
-# if cfg!(unix) {
+# if cfg!(target_os = "linux") {
 let mut cat_command = Command::new("cat");
 
 cat_command.stdout(Stdio::piped());
@@ -193,7 +193,7 @@ use std::fs::File;
 use execute::generic_array::typenum::U4096;
 use execute::Execute;
 
-# if cfg!(unix) {
+# if cfg!(target_os = "linux") {
 let mut cat_command = Command::new("cat");
 
 cat_command.stdout(Stdio::piped());
@@ -215,7 +215,7 @@ use std::process::{Command, Stdio};
 
 use execute::Execute;
 
-# if cfg!(unix) {
+# if cfg!(target_os = "linux") {
 let mut command1 = Command::new("echo");
 command1.arg("HELLO WORLD");
 

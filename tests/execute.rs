@@ -1,4 +1,4 @@
-#![cfg(unix)]
+#![cfg(target_os = "linux")]
 
 extern crate execute;
 
