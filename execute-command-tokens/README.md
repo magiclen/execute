@@ -5,6 +5,8 @@ Execute Command Tokens
 
 Parse command strings.
 
+See [`execute`](https://crates.io/crates/execute). 
+
 ## Crates.io
 
 https://crates.io/crates/execute
