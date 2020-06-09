@@ -1,0 +1,30 @@
+/*!
+# Execute Command Macro
+
+Create `Command` instances using the `command!` macro.
+
+Also see [`execute`](https://crates.io/crates/execute).
+
+## Examples
+
+```rust
+#[macro_use] extern crate execute_command_macro;
+
+let command = command!("program arg1 arg2 'arg 3' -opt1 -opt2");
+```
+*/
+
+#[macro_use]
+extern crate proc_macro_hack;
+
+extern crate execute_command_macro_impl;
+
+/// Generate the statements at compile time to create a `Command` instance by a command string.
+///
+/// ```rust
+/// #[macro_use] extern crate execute_command_macro;
+///
+/// let command = command!("program arg1 arg2 -opt1 -opt2");
+/// ```
+#[proc_macro_hack]
+pub use execute_command_macro_impl::command;

@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "execute-command-tokens",
+    "execute-command-macro-impl",
+    "execute-command-macro",
+    "execute"
+]

@@ -1,0 +1,26 @@
+[package]
+name = "execute-command-macro-impl"
+version = "0.1.0"
+authors = ["Magic Len <len@magiclen.org>"]
+edition = "2018"
+repository = "https://github.com/magiclen/execute"
+homepage = "https://magiclen.org/execute"
+keywords = ["execute", "command"]
+categories = ["parser-implementations"]
+description= "Create `Command` instances using the `command!` macro."
+readme = "README.md"
+license = "MIT"
+
+[badges.travis-ci]
+repository = "magiclen/execute"
+branch = "master"
+
+[lib]
+proc_macro = true
+
+[dependencies]
+execute-command-tokens = {version = "0.1", path = "../execute-command-tokens"}
+
+proc-macro-hack = "0.5"
+syn = "1"
+quote = "1"
