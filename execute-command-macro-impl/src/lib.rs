@@ -27,21 +27,33 @@ pub fn command(input: TokenStream) -> TokenStream {
 
     let tokens = command_tokens(s);
 
-    let command = if tokens.is_empty() {
-        quote! {
-            std::process::Command::new("")
+    let tokens_length = tokens.len();
+
+    let command = match tokens_length {
+        0 => {
+            quote! {
+                std::process::Command::new("")
+            }
         }
-    } else {
-        let program = &tokens[0];
-        let args = &tokens[1..];
+        1 => {
+            let program = &tokens[0];
 
-        quote! {
-            {
-                let mut command = std::process::Command::new(#program);
+            quote! {
+                std::process::Command::new(#program)
+            }
+        }
+        _ => {
+            let program = &tokens[0];
+            let args = &tokens[1..];
 
-                command.args(&[#(#args,)*]);
+            quote! {
+                {
+                    let mut command = std::process::Command::new(#program);
 
-                command
+                    command.args(&[#(#args,)*]);
+
+                    command
+                }
             }
         }
     };

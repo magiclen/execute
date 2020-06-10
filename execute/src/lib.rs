@@ -286,7 +286,7 @@ extern crate execute;
 
 use std::process::{Command, Stdio};
 
-use execute::{Execute, command};
+use execute::Execute;
 
 # if cfg!(target_os = "linux") {
 let mut command = execute::command!("cat '/proc/meminfo'");
