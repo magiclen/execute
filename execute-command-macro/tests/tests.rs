@@ -11,3 +11,12 @@ fn command() {
 
     assert_eq!(b"123\n", output.stdout.as_slice());
 }
+
+#[test]
+fn command_args() {
+    let mut command = command_args!("sh", "-c", "echo '123 456' | cut -d ' ' -f 1");
+
+    let output = command.output().unwrap();
+
+    assert_eq!(b"123\n", output.stdout.as_slice());
+}
