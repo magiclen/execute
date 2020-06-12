@@ -287,6 +287,26 @@ let output = command.execute_output().unwrap();
 println!("{}", String::from_utf8(output.stdout).unwrap());
 ```
 
+### Create a `Command` Instance by Providing Arguments Separately
+
+The `command_args!` macro can be used to create a `Command` instance with a program name and arguments separately. The program name and arguments can be non-literal.
+
+```rust
+extern crate execute;
+
+use std::process::{Command, Stdio};
+
+use execute::Execute;
+
+let mut command = execute::command_args!("cat", "/proc/meminfo");
+
+command.stdout(Stdio::piped());
+
+let output = command.execute_output().unwrap();
+
+println!("{}", String::from_utf8(output.stdout).unwrap());
+```
+
 ## Crates.io
 
 https://crates.io/crates/execute

@@ -298,6 +298,28 @@ let output = command.execute_output().unwrap();
 println!("{}", String::from_utf8(output.stdout).unwrap());
 # }
 ```
+
+### Create a `Command` Instance by Providing Arguments Separately
+
+The `command_args!` macro can be used to create a `Command` instance with a program name and arguments separately. The program name and arguments can be non-literal.
+
+```rust
+extern crate execute;
+
+use std::process::{Command, Stdio};
+
+use execute::Execute;
+
+# if cfg!(target_os = "linux") {
+let mut command = execute::command_args!("cat", "/proc/meminfo");
+
+command.stdout(Stdio::piped());
+
+let output = command.execute_output().unwrap();
+
+println!("{}", String::from_utf8(output.stdout).unwrap());
+# }
+```
 */
 
 pub extern crate generic_array;
@@ -317,7 +339,7 @@ use generic_array::{ArrayLength, GenericArray};
 
 use execute_command_tokens::command_tokens;
 
-pub use execute_command_macro::command;
+pub use execute_command_macro::{command, command_args};
 
 pub trait Execute {
     /// Execute this command and get the exit status code. stdin will be set to `Stdio::inherit()`. stdout and stderr will be set to `Stdio::null()`.
