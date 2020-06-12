@@ -342,13 +342,13 @@ use execute_command_tokens::command_tokens;
 pub use execute_command_macro::{command, command_args};
 
 pub trait Execute {
-    /// Execute this command and get the exit status code. stdin will be set to `Stdio::inherit()`. stdout and stderr will be set to `Stdio::null()`.
+    /// Execute this command and get the exit status code. stdout and stderr will be set to `Stdio::null()`. By default, stdin is inherited from the parent.
     fn execute(&mut self) -> Result<Option<i32>, io::Error>;
 
-    /// Execute this command and get the exit status code. stdin will be set to `Stdio::inherit()`. By default, stdout and stderr are inherited from the parent.
+    /// Execute this command and get the exit status code. By default, stdin, stdout and stderr are inherited from the parent.
     fn execute_output(&mut self) -> Result<Output, io::Error>;
 
-    /// Execute this command and check the exit status code. stdin will be set to `Stdio::inherit()`. stdout and stderr will be set to `Stdio::null()`. It's usually used for checking whether the program is correct.
+    /// Execute this command and check the exit status code. stdout and stderr will be set to `Stdio::null()`. By default, stdin is inherited from the parent. It's usually used for checking whether the program is correct.
     #[inline]
     fn execute_check_exit_status_code(
         &mut self,
@@ -398,10 +398,10 @@ pub trait Execute {
 
     /// TODO execute_multiple
 
-    /// Execute this command as well as other commands and pipe their stdin and stdout, and get the exit status code. The stdin of the first process will be set to `Stdio::inherit()`. The stdout and stderr of the last process will be set to `Stdio::null()`.
+    /// Execute this command as well as other commands and pipe their stdin and stdout, and get the exit status code. The stdout and stderr of the last process will be set to `Stdio::null()`. By default, the stdin of the first process is inherited from the parent.
     fn execute_multiple(&mut self, others: &mut [&mut Command]) -> Result<Option<i32>, io::Error>;
 
-    /// Execute this command as well as other commands and pipe their stdin and stdout. The stdin of the first process will be set to `Stdio::inherit()`. By default, the stdout and stderr of the last process are inherited from the parent.
+    /// Execute this command as well as other commands and pipe their stdin and stdout. By default, the stdin of the first process, the stdout and stderr of the last process are inherited from the parent.
     fn execute_multiple_output(&mut self, others: &mut [&mut Command])
         -> Result<Output, io::Error>;
 
@@ -459,7 +459,6 @@ pub trait Execute {
 impl Execute for Command {
     #[inline]
     fn execute(&mut self) -> Result<Option<i32>, io::Error> {
-        self.stdin(Stdio::inherit());
         self.stdout(Stdio::null());
         self.stderr(Stdio::null());
 
@@ -468,8 +467,6 @@ impl Execute for Command {
 
     #[inline]
     fn execute_output(&mut self) -> Result<Output, io::Error> {
-        self.stdin(Stdio::inherit());
-
         self.spawn()?.wait_with_output()
     }
 
@@ -564,7 +561,6 @@ impl Execute for Command {
             return self.execute();
         }
 
-        self.stdin(Stdio::inherit());
         self.stdout(Stdio::piped());
         self.stderr(Stdio::null());
 
@@ -597,7 +593,6 @@ impl Execute for Command {
             return self.execute_output();
         }
 
-        self.stdin(Stdio::inherit());
         self.stdout(Stdio::piped());
         self.stderr(Stdio::null());
 
