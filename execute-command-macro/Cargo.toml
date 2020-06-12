@@ -1,13 +1,13 @@
 [package]
 name = "execute-command-macro"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2018"
 repository = "https://github.com/magiclen/execute"
 homepage = "https://magiclen.org/execute"
 keywords = ["execute", "command"]
 categories = ["parser-implementations"]
-description= "Create `Command` instances using the `command!` macro."
+description= "Create `Command` instances using the `command!` macro or the `command_args!` marco."
 readme = "README.md"
 license = "MIT"
 
