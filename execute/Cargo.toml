@@ -10,6 +10,7 @@ categories = ["parser-implementations"]
 description= "A library for extending `Command` in order to execute programs more easily."
 readme = "README.md"
 license = "MIT"
+include = ["src/**/*", "Cargo.toml"]
 
 [badges.travis-ci]
 repository = "magiclen/execute"
@@ -20,6 +21,3 @@ execute-command-tokens = {version = "0.1", path = "../execute-command-tokens"}
 execute-command-macro = {version = "0.1.1", path = "../execute-command-macro"}
 
 generic-array = "0.14.1"
-
-[features]
-nightly = []
