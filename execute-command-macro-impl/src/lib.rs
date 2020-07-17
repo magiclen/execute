@@ -19,15 +19,6 @@ use syn::LitStr;
 
 use execute_command_tokens::command_tokens;
 
-/**
-Generate the statements at compile time to create a `Command` instance by a command string.
-
-```rust
-#[macro_use] extern crate execute_command_macro_impl;
-
-let command = command!("program arg1 arg2 -opt1 -opt2");
-```
-*/
 #[proc_macro]
 pub fn command(input: TokenStream) -> TokenStream {
     let s = parse_macro_input!(input as LitStr).value();
@@ -39,14 +30,14 @@ pub fn command(input: TokenStream) -> TokenStream {
     let command = match tokens_length {
         0 => {
             quote! {
-                std::process::Command::new("")
+                ::std::process::Command::new("")
             }
         }
         1 => {
             let program = &tokens[0];
 
             quote! {
-                std::process::Command::new(#program)
+                ::std::process::Command::new(#program)
             }
         }
         _ => {
@@ -55,7 +46,7 @@ pub fn command(input: TokenStream) -> TokenStream {
 
             quote! {
                 {
-                    let mut command = std::process::Command::new(#program);
+                    let mut command = ::std::process::Command::new(#program);
 
                     command.args(&[#(#args,)*]);
 

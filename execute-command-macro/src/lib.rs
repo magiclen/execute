@@ -45,11 +45,11 @@ let command = command_args!("program", "arg1", "arg2", "-opt1", "-opt2");
 #[macro_export]
 macro_rules! command_args {
     ($program:expr $(,)*) => {
-        std::process::Command::new($program)
+        ::std::process::Command::new($program)
     };
     ($program:expr, $arg:expr $(, $args:expr)* $(,)*) => {
         {
-            let mut command = std::process::Command::new($program);
+            let mut command = ::std::process::Command::new($program);
 
             command.arg(&$arg)$(.arg(&$args))*;
 
