@@ -1,13 +1,13 @@
 [package]
 name = "execute"
-version = "0.2.6"
+version = "0.2.7"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2018"
 repository = "https://github.com/magiclen/execute"
 homepage = "https://magiclen.org/execute"
 keywords = ["execute", "redirect", "process", "command", "pipe"]
 categories = ["parser-implementations"]
-description= "A library for extending `Command` in order to execute programs more easily."
+description = "A library for extending `Command` in order to execute programs more easily."
 readme = "README.md"
 license = "MIT"
 include = ["src/**/*", "Cargo.toml"]
@@ -17,7 +17,7 @@ repository = "magiclen/execute"
 branch = "master"
 
 [dependencies]
-execute-command-tokens = {version = "0.1", path = "../execute-command-tokens"}
-execute-command-macro = {version = "0.1.1", path = "../execute-command-macro"}
+execute-command-tokens = { version = "0.1", path = "../execute-command-tokens" }
+execute-command-macro = { version = "0.1.1", path = "../execute-command-macro" }
 
 generic-array = "0.14.1"

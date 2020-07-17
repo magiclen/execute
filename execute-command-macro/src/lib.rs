@@ -20,28 +20,28 @@ let command = command_args!("program", "arg1", "arg2", "-opt1", "-opt2");
 ```
 */
 
-#[macro_use]
-extern crate proc_macro_hack;
-
 extern crate execute_command_macro_impl;
 
-/// Generate the statements at compile time to create a `Command` instance by a command string.
-///
-/// ```rust
-/// #[macro_use] extern crate execute_command_macro;
-///
-/// let command = command!("program arg1 arg2 -opt1 -opt2");
-/// ```
-#[proc_macro_hack]
+/**
+Generate the statements at compile time to create a `Command` instance by a command string.
+
+```rust
+#[macro_use] extern crate execute_command_macro;
+
+let command = command!("program arg1 arg2 -opt1 -opt2");
+```
+*/
 pub use execute_command_macro_impl::command;
 
-/// Create a `Command` instance by inputting args separately.
-///
-/// ```rust
-/// #[macro_use] extern crate execute_command_macro;
-///
-/// let command = command_args!("program", "arg1", "arg2", "-opt1", "-opt2");
-/// ```
+/**
+Create a `Command` instance by inputting args separately.
+
+```rust
+#[macro_use] extern crate execute_command_macro;
+
+let command = command_args!("program", "arg1", "arg2", "-opt1", "-opt2");
+```
+*/
 #[macro_export]
 macro_rules! command_args {
     ($program:expr $(,)*) => {
