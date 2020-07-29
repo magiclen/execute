@@ -1,6 +1,6 @@
 [package]
 name = "execute"
-version = "0.2.7"
+version = "0.2.8"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2018"
 repository = "https://github.com/magiclen/execute"
@@ -10,7 +10,7 @@ categories = ["parser-implementations"]
 description = "A library for extending `Command` in order to execute programs more easily."
 readme = "README.md"
 license = "MIT"
-include = ["src/**/*", "Cargo.toml"]
+include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
 [badges.travis-ci]
 repository = "magiclen/execute"
