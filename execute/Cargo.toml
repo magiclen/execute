@@ -1,6 +1,6 @@
 [package]
 name = "execute"
-version = "0.2.8"
+version = "0.2.9"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2018"
 repository = "https://github.com/magiclen/execute"
@@ -11,10 +11,6 @@ description = "A library for extending `Command` in order to execute programs mo
 readme = "README.md"
 license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
-
-[badges.travis-ci]
-repository = "magiclen/execute"
-branch = "master"
 
 [dependencies]
 execute-command-tokens = { version = "0.1", path = "../execute-command-tokens" }

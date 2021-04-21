@@ -1,7 +1,7 @@
 Execute Command Macro
 ====================
 
-[![Build Status](https://travis-ci.org/magiclen/execute.svg?branch=master)](https://travis-ci.org/magiclen/execute)
+[![CI](https://github.com/magiclen/execute/actions/workflows/ci.yml/badge.svg)](https://github.com/magiclen/execute/actions/workflows/ci.yml)
 
 Create `Command` instances using the `command!` macro or the `command_args!` macro.
 

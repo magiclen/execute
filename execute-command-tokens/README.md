@@ -1,7 +1,7 @@
 Execute Command Tokens
 ====================
 
-[![Build Status](https://travis-ci.org/magiclen/execute.svg?branch=master)](https://travis-ci.org/magiclen/execute)
+[![CI](https://github.com/magiclen/execute/actions/workflows/ci.yml/badge.svg)](https://github.com/magiclen/execute/actions/workflows/ci.yml)
 
 Parse command strings.
 

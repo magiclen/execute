@@ -1,7 +1,7 @@
 Execute
 ====================
 
-[![Build Status](https://travis-ci.org/magiclen/execute.svg?branch=master)](https://travis-ci.org/magiclen/execute)
+[![CI](https://github.com/magiclen/execute/actions/workflows/ci.yml/badge.svg)](https://github.com/magiclen/execute/actions/workflows/ci.yml)
 
 This library is used for extending `Command` in order to execute programs more easily.
 

@@ -1,7 +1,7 @@
 Execute Command Macro Impl
 ====================
 
-[![Build Status](https://travis-ci.org/magiclen/execute.svg?branch=master)](https://travis-ci.org/magiclen/execute)
+[![CI](https://github.com/magiclen/execute/actions/workflows/ci.yml/badge.svg)](https://github.com/magiclen/execute/actions/workflows/ci.yml)
 
 See [`execute-command-macro`](https://crates.io/crates/execute-command-macro). 
 
