@@ -1,8 +1,8 @@
 [package]
 name = "execute-command-macro-impl"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Magic Len <len@magiclen.org>"]
-edition = "2018"
+edition = "2021"
 repository = "https://github.com/magiclen/execute"
 homepage = "https://magiclen.org/execute"
 keywords = ["execute", "command"]
