@@ -1,7 +1,5 @@
 #![cfg(target_os = "linux")]
 
-extern crate execute;
-
 use std::io::Cursor;
 use std::process::{Command, Stdio};
 

@@ -1,5 +1,3 @@
-extern crate execute_command_tokens;
-
 use execute_command_tokens::command_tokens;
 
 #[test]

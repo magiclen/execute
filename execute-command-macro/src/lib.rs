@@ -20,8 +20,6 @@ let command = command_args!("program", "arg1", "arg2", "-opt1", "-opt2");
 ```
 */
 
-extern crate execute_command_macro_impl;
-
 /**
 Generate the statements at compile time to create a `Command` instance by a command string.
 

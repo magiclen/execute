@@ -6,8 +6,6 @@ This library is used for extending `Command` in order to execute programs more e
 ## Usage
 
 ```rust
-extern crate execute;
-
 use std::process::Command;
 
 use execute::Execute;
@@ -22,8 +20,6 @@ Since `Command` is used for spawning a process of a command and the executed pro
 The `execute_check_exit_status_code` method can be used to execute a command and check its exit status. For example,
 
 ```rust
-extern crate execute;
-
 use std::process::Command;
 
 use execute::Execute;
@@ -42,8 +38,6 @@ if first_command.execute_check_exit_status_code(0).is_err() {
 ### Execute and Get the Exit Status
 
 ```rust,ignore
-extern crate execute;
-
 use std::process::Command;
 
 use execute::Execute;
@@ -72,8 +66,6 @@ if let Some(exit_code) = command.execute().unwrap() {
 #### Output to the Screen
 
 ```rust,ignore
-extern crate execute;
-
 use std::process::Command;
 
 use execute::Execute;
@@ -102,8 +94,6 @@ if let Some(exit_code) = output.status.code() {
 #### Output to Memory (Captured)
 
 ```rust,ignore
-extern crate execute;
-
 use std::process::{Command, Stdio};
 
 use execute::Execute;
@@ -140,8 +130,6 @@ println!("{}", String::from_utf8(output.stderr).unwrap());
 #### Input In-memory Data
 
 ```rust
-extern crate execute;
-
 use std::process::{Command, Stdio};
 
 use execute::Execute;
@@ -160,8 +148,6 @@ println!("Answer: {}", String::from_utf8(output.stdout).unwrap().trim_end());
 #### Input from a Reader
 
 ```rust
-extern crate execute;
-
 use std::process::{Command, Stdio};
 use std::fs::File;
 
@@ -185,8 +171,6 @@ By default, the buffer size is 256 bytes. If you want to change that, you can us
 For example, to change the buffer size to 4096 bytes,
 
 ```rust
-extern crate execute;
-
 use std::process::{Command, Stdio};
 use std::fs::File;
 
@@ -209,8 +193,6 @@ println!("{}", String::from_utf8(output.stdout).unwrap());
 ### Execute Multiple Commands and Pipe Them Together
 
 ```rust
-extern crate execute;
-
 use std::process::{Command, Stdio};
 
 use execute::Execute;
@@ -238,8 +220,6 @@ assert_eq!(b"hello\n", output.stdout.as_slice());
 The `shell` function can be used to create a `Command` instance with a single command string instead of a program name and scattered arguments.
 
 ```rust
-extern crate execute;
-
 use std::process::{Command, Stdio};
 
 use execute::{Execute, shell};
@@ -260,8 +240,6 @@ println!("{}", String::from_utf8(output.stdout).unwrap());
 The `command` function can be used to create a `Command` instance with a single command string instead of a program name and scattered arguments. The difference between the `shell` function and the `command` function is that the former is interpreted by the current shell while the latter is parsed by this crate.
 
 ```rust
-extern crate execute;
-
 use std::process::{Command, Stdio};
 
 use execute::{Execute, command};
@@ -282,8 +260,6 @@ println!("{}", String::from_utf8(output.stdout).unwrap());
 The `command!` macro can be used to create a `Command` instance with a single command string literal instead of a program name and scattered arguments.
 
 ```rust
-extern crate execute;
-
 use std::process::{Command, Stdio};
 
 use execute::Execute;
@@ -304,8 +280,6 @@ println!("{}", String::from_utf8(output.stdout).unwrap());
 The `command_args!` macro can be used to create a `Command` instance with a program name and arguments separately. The program name and arguments can be non-literal.
 
 ```rust
-extern crate execute;
-
 use std::process::{Command, Stdio};
 
 use execute::Execute;
@@ -323,10 +297,6 @@ println!("{}", String::from_utf8(output.stdout).unwrap());
 */
 
 pub extern crate generic_array;
-
-extern crate execute_command_tokens;
-
-extern crate execute_command_macro;
 
 use std::env;
 use std::ffi::{OsStr, OsString};

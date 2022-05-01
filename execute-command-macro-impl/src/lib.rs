@@ -4,15 +4,9 @@
 See [`execute-command-macro`](https://crates.io/crates/execute-command-macro).
 */
 
-extern crate execute_command_tokens;
+use syn::parse_macro_input;
 
-#[macro_use]
-extern crate syn;
-
-#[macro_use]
-extern crate quote;
-
-extern crate proc_macro;
+use quote::quote;
 
 use proc_macro::TokenStream;
 use syn::LitStr;
