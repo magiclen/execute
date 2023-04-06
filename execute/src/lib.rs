@@ -298,12 +298,12 @@ println!("{}", String::from_utf8(output.stdout).unwrap());
 
 pub extern crate generic_array;
 
+#[cfg(unix)]
+use std::{env, ffi::OsString, sync::Once};
 use std::{
-    env,
-    ffi::{OsStr, OsString},
+    ffi::OsStr,
     io::{self, ErrorKind, Read, Write},
     process::{Command, Output, Stdio},
-    sync::Once,
 };
 
 pub use execute_command_macro::{command, command_args};
