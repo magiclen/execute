@@ -62,16 +62,16 @@ pub fn command_tokens<S: AsRef<str>>(cmd: S) -> Vec<String> {
                         quote_mode = true;
                         quote_char = c;
                     }
-                }
+                },
                 '\\' => {
                     escaping = true;
-                }
+                },
                 _ => {
                     append_mode = true;
                     escaping = false;
 
                     string_buffer.push(c);
-                }
+                },
             }
         }
     }

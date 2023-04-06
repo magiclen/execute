@@ -1,7 +1,9 @@
 #![cfg(target_os = "linux")]
 
-use std::io::Cursor;
-use std::process::{Command, Stdio};
+use std::{
+    io::Cursor,
+    process::{Command, Stdio},
+};
 
 use execute::Execute;
 

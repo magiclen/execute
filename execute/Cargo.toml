@@ -3,6 +3,7 @@ name = "execute"
 version = "0.2.11"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2021"
+rust-version = "1.56"
 repository = "https://github.com/magiclen/execute"
 homepage = "https://magiclen.org/execute"
 keywords = ["execute", "redirect", "process", "command", "pipe"]

@@ -4,14 +4,10 @@
 See [`execute-command-macro`](https://crates.io/crates/execute-command-macro).
 */
 
-use syn::parse_macro_input;
-
-use quote::quote;
-
-use proc_macro::TokenStream;
-use syn::LitStr;
-
 use execute_command_tokens::command_tokens;
+use proc_macro::TokenStream;
+use quote::quote;
+use syn::{parse_macro_input, LitStr};
 
 #[proc_macro]
 pub fn command(input: TokenStream) -> TokenStream {
@@ -26,14 +22,14 @@ pub fn command(input: TokenStream) -> TokenStream {
             quote! {
                 ::std::process::Command::new("")
             }
-        }
+        },
         1 => {
             let program = &tokens[0];
 
             quote! {
                 ::std::process::Command::new(#program)
             }
-        }
+        },
         _ => {
             let program = &tokens[0];
             let args = &tokens[1..];
@@ -47,7 +43,7 @@ pub fn command(input: TokenStream) -> TokenStream {
                     command
                 }
             }
-        }
+        },
     };
 
     command.into()

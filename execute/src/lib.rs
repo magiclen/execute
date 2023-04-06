@@ -298,18 +298,20 @@ println!("{}", String::from_utf8(output.stdout).unwrap());
 
 pub extern crate generic_array;
 
-use std::env;
-use std::ffi::{OsStr, OsString};
-use std::io::{self, ErrorKind, Read, Write};
-use std::process::{Command, Output, Stdio};
-use std::sync::Once;
-
-use generic_array::typenum::{IsGreaterOrEqual, True, U1, U256};
-use generic_array::{ArrayLength, GenericArray};
-
-use execute_command_tokens::command_tokens;
+use std::{
+    env,
+    ffi::{OsStr, OsString},
+    io::{self, ErrorKind, Read, Write},
+    process::{Command, Output, Stdio},
+    sync::Once,
+};
 
 pub use execute_command_macro::{command, command_args};
+use execute_command_tokens::command_tokens;
+use generic_array::{
+    typenum::{IsGreaterOrEqual, True, U1, U256},
+    ArrayLength, GenericArray,
+};
 
 pub trait Execute {
     /// Execute this command and get the exit status code. stdout and stderr will be set to `Stdio::null()`. By default, stdin is inherited from the parent.
