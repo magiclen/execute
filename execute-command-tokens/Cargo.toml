@@ -9,7 +9,6 @@ homepage = "https://magiclen.org/execute"
 keywords = ["execute", "command"]
 categories = ["parser-implementations"]
 description= "Parse command strings."
-readme = "README.md"
 license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 

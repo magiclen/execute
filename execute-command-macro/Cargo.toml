@@ -9,7 +9,6 @@ homepage = "https://magiclen.org/execute"
 keywords = ["execute", "command"]
 categories = ["parser-implementations"]
 description = "Create `Command` instances using the `command!` macro or the `command_args!` marco."
-readme = "README.md"
 license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
