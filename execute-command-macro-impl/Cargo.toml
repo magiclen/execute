@@ -18,5 +18,5 @@ proc_macro = true
 [dependencies]
 execute-command-tokens = { version = "0.1", path = "../execute-command-tokens" }
 
-syn = "1"
+syn = "2"
 quote = "1"
