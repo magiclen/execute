@@ -1,6 +1,6 @@
 [package]
 name = "execute-command-macro-impl"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2021"
 rust-version = "1.56"
