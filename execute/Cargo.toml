@@ -1,9 +1,9 @@
 [package]
 name = "execute"
-version = "0.2.12"
+version = "0.2.13"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2021"
-rust-version = "1.56"
+rust-version = "1.65"
 repository = "https://github.com/magiclen/execute"
 homepage = "https://magiclen.org/execute"
 keywords = ["execute", "redirect", "process", "command", "pipe"]
@@ -16,4 +16,4 @@ include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 execute-command-tokens = { version = "0.1", path = "../execute-command-tokens" }
 execute-command-macro = { version = "0.1.1", path = "../execute-command-macro" }
 
-generic-array = "0.14.1"
+generic-array = "1"

@@ -351,7 +351,7 @@ pub trait Execute {
     }
 
     /// Execute this command and input data from a reader to the process. stdin will be set to `Stdio::piped()`. stdout and stderr will be set to `Stdio::null()`.
-    fn execute_input_reader2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_input_reader2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
         &mut self,
         reader: &mut dyn Read,
     ) -> Result<Option<i32>, io::Error>;
@@ -363,7 +363,7 @@ pub trait Execute {
     }
 
     /// Execute this command and input data from a reader to the process. stdin will be set to `Stdio::piped()`. By default, stdout and stderr are inherited from the parent.
-    fn execute_input_reader_output2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_input_reader_output2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
         &mut self,
         reader: &mut dyn Read,
     ) -> Result<Output, io::Error>;
@@ -402,7 +402,7 @@ pub trait Execute {
     }
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input data from a reader to the process, and get the exit status code. The stdin of the first process will be set to `Stdio::piped()`. The stdout and stderr of the last process will be set to `Stdio::null()`.
-    fn execute_multiple_input_reader2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_multiple_input_reader2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
@@ -419,9 +419,7 @@ pub trait Execute {
     }
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input data from a reader to the process. The stdin of the first process will be set to `Stdio::piped()`. By default, the stdout and stderr of the last process are inherited from the parent.
-    fn execute_multiple_input_reader_output2<
-        N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>,
-    >(
+    fn execute_multiple_input_reader_output2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
@@ -473,7 +471,7 @@ impl Execute for Command {
     }
 
     #[inline]
-    fn execute_input_reader2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_input_reader2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
         &mut self,
         reader: &mut dyn Read,
     ) -> Result<Option<i32>, io::Error> {
@@ -502,7 +500,7 @@ impl Execute for Command {
     }
 
     #[inline]
-    fn execute_input_reader_output2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_input_reader_output2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
         &mut self,
         reader: &mut dyn Read,
     ) -> Result<Output, io::Error> {
@@ -657,7 +655,7 @@ impl Execute for Command {
         last_other.spawn()?.wait_with_output()
     }
 
-    fn execute_multiple_input_reader2<N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_multiple_input_reader2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
@@ -707,7 +705,7 @@ impl Execute for Command {
     }
 
     fn execute_multiple_input_reader_output2<
-        N: ArrayLength<u8> + IsGreaterOrEqual<U1, Output = True>,
+        N: ArrayLength + IsGreaterOrEqual<U1, Output = True>,
     >(
         &mut self,
         reader: &mut dyn Read,
