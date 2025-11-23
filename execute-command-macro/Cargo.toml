@@ -1,7 +1,7 @@
 [package]
 name = "execute-command-macro"
-version = "0.1.9"
-rust-version = "1.65"
+version = "0.1.10"
+rust-version = "1.68"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2021"
 repository = "https://github.com/magiclen/execute"

@@ -1,9 +1,9 @@
 [package]
 name = "execute-command-tokens"
-version = "0.1.7"
+version = "0.1.8"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2021"
-rust-version = "1.65"
+rust-version = "1.68"
 repository = "https://github.com/magiclen/execute"
 homepage = "https://magiclen.org/execute"
 keywords = ["execute", "command"]

@@ -368,7 +368,7 @@ pub trait Execute {
         reader: &mut dyn Read,
     ) -> Result<Output, io::Error>;
 
-    /// TODO execute_multiple
+    // TODO execute_multiple
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and get the exit status code. The stdout and stderr of the last process will be set to `Stdio::null()`. By default, the stdin of the first process is inherited from the parent.
     fn execute_multiple(&mut self, others: &mut [&mut Command]) -> Result<Option<i32>, io::Error>;
@@ -766,6 +766,7 @@ pub fn shell<S: AsRef<OsStr>>(cmd: S) -> Command {
             SHELL = Some(env::var_os("SHELL").unwrap_or_else(|| OsString::from(String::from("sh"))))
         });
 
+        #[allow(static_mut_refs)]
         SHELL.as_ref().unwrap()
     };
 
