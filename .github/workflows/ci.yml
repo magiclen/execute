@@ -57,7 +57,7 @@ jobs:
           - macos-latest
           - windows-latest
         toolchain:
-          - 1.68
+          - "1.80"
         features:
           -
     name: Test ${{ matrix.toolchain }} on ${{ matrix.os }} (${{ matrix.features }})

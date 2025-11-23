@@ -299,7 +299,7 @@ println!("{}", String::from_utf8(output.stdout).unwrap());
 pub extern crate generic_array;
 
 #[cfg(unix)]
-use std::{env, ffi::OsString, sync::Once};
+use std::{env, ffi::OsString};
 use std::{
     ffi::OsStr,
     io::{self, ErrorKind, Read, Write},
@@ -328,7 +328,7 @@ pub trait Execute {
     ) -> Result<(), io::Error> {
         match self.execute()? {
             Some(exit_status_code) if exit_status_code == expected_exit_status_code => Ok(()),
-            _ => Err(io::Error::new(ErrorKind::Other, "unexpected exit status")),
+            _ => Err(io::Error::other("unexpected exit status")),
         }
     }
 
@@ -758,19 +758,13 @@ impl Execute for Command {
 #[cfg(unix)]
 #[inline]
 pub fn shell<S: AsRef<OsStr>>(cmd: S) -> Command {
-    static START: Once = Once::new();
-    static mut SHELL: Option<OsString> = None;
+    use std::sync::LazyLock;
 
-    let shell = unsafe {
-        START.call_once(|| {
-            SHELL = Some(env::var_os("SHELL").unwrap_or_else(|| OsString::from(String::from("sh"))))
-        });
+    static SHELL: LazyLock<OsString> = LazyLock::new(|| {
+        env::var_os("SHELL").unwrap_or_else(|| OsString::from(String::from("sh")))
+    });
 
-        #[allow(static_mut_refs)]
-        SHELL.as_ref().unwrap()
-    };
-
-    let mut command = Command::new(shell);
+    let mut command = Command::new(&*SHELL);
 
     command.arg("-c");
     command.arg(cmd);
