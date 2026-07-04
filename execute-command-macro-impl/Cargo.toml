@@ -16,7 +16,7 @@ include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 proc-macro = true
 
 [dependencies]
-execute-command-tokens = { version = "0.3.0", path = "../execute-command-tokens" }
+execute-command-tokens = { version = "0.3", path = "../execute-command-tokens" }
 
 syn = { version = "2", default-features = false, features = ["parsing", "proc-macro"] }
-quote = "1"
+quote = "1.0.25"

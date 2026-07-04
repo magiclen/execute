@@ -13,4 +13,4 @@ license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
-execute-command-macro-impl = { version = "0.3.0", path = "../execute-command-macro-impl" }
+execute-command-macro-impl = { version = "0.3", path = "../execute-command-macro-impl" }
