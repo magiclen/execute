@@ -1,11 +1,13 @@
 #![cfg(target_os = "linux")]
 
 use std::{
-    io::{Cursor, ErrorKind},
+    io::Cursor,
     process::{Command, Stdio},
 };
 
 use execute::Execute;
+
+const LARGE_INPUT_SIZE: usize = 1024 * 1024;
 
 #[test]
 fn execute() {
@@ -61,6 +63,18 @@ fn execute_input_output() {
 }
 
 #[test]
+fn execute_input_output_with_large_input() {
+    let mut command = Command::new("cat");
+
+    command.stdout(Stdio::piped());
+
+    let data = vec![b'a'; LARGE_INPUT_SIZE];
+    let output = command.execute_input_output(&data).unwrap();
+
+    assert_eq!(data, output.stdout);
+}
+
+#[test]
 fn execute_input_reader() {
     let mut command = Command::new("bc");
 
@@ -96,12 +110,15 @@ fn execute_input_reader_output_with_const_buffer_size() {
 }
 
 #[test]
-fn execute_input_reader_rejects_zero_buffer_size() {
+fn execute_input_reader_output_with_large_input() {
     let mut command = Command::new("cat");
 
-    let mut reader = Cursor::new("abc");
+    command.stdout(Stdio::piped());
 
-    let err = command.execute_input_reader2::<0>(&mut reader).unwrap_err();
+    let data = vec![b'a'; LARGE_INPUT_SIZE];
+    let mut reader = Cursor::new(data.as_slice());
 
-    assert_eq!(ErrorKind::InvalidInput, err.kind());
+    let output = command.execute_input_reader_output2::<4096>(&mut reader).unwrap();
+
+    assert_eq!(data, output.stdout);
 }

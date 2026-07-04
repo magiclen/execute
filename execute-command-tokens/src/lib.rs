@@ -6,7 +6,12 @@ Parse command strings.
 See [`execute`](https://crates.io/crates/execute).
 */
 
-/// Parse a command string.
+/// Parse a command string into program and argument tokens.
+///
+/// Whitespace separates tokens, single quotes and double quotes keep whitespace inside a token, and a backslash escapes the next character.
+/// Adjacent quoted and unquoted parts are joined into one token, so `a"b"` and `'a'b` both become `ab`.
+/// This parser is not a shell parser: it does not expand variables, globs, redirections, pipes, or command substitutions.
+/// Unmatched quotes and a trailing backslash are handled as best-effort tolerant input instead of returning an error.
 pub fn command_tokens<S: AsRef<str>>(cmd: S) -> Vec<String> {
     let cmd = cmd.as_ref();
 

@@ -300,7 +300,8 @@ use std::{env, ffi::OsString};
 use std::{
     ffi::OsStr,
     io::{self, ErrorKind, Read, Write},
-    process::{Command, Output, Stdio},
+    process::{Child, ChildStdin, ChildStdout, Command, Output, Stdio},
+    thread,
 };
 
 pub use execute_command_macro::{command, command_args};
@@ -309,11 +310,165 @@ use execute_command_tokens::command_tokens;
 const DEFAULT_READER_BUFFER_SIZE: usize = 256;
 
 #[inline]
-fn check_reader_buffer_size<const N: usize>() -> Result<(), io::Error> {
-    if N == 0 {
-        Err(io::Error::new(ErrorKind::InvalidInput, "reader buffer size must be greater than zero"))
-    } else {
-        Ok(())
+fn take_child_stdin(child: &mut Child) -> Result<ChildStdin, io::Error> {
+    child.stdin.take().ok_or_else(|| io::Error::other("child stdin was not piped"))
+}
+
+#[inline]
+fn take_child_stdout(child: &mut Child) -> Result<ChildStdout, io::Error> {
+    child.stdout.take().ok_or_else(|| io::Error::other("child stdout was not piped"))
+}
+
+#[inline]
+fn write_stdin<D: ?Sized + AsRef<[u8]>>(mut stdin: ChildStdin, data: &D) -> Result<(), io::Error> {
+    stdin.write_all(data.as_ref())
+}
+
+fn copy_reader_to_stdin<const N: usize>(
+    mut stdin: ChildStdin,
+    reader: &mut dyn Read,
+) -> Result<(), io::Error> {
+    const { assert!(N > 0, "reader buffer size must be greater than zero") };
+
+    let mut buffer = [0u8; N];
+
+    loop {
+        match reader.read(&mut buffer) {
+            Ok(0) => break,
+            Ok(c) => stdin.write_all(&buffer[0..c])?,
+            Err(ref err) if err.kind() == ErrorKind::Interrupted => (),
+            Err(err) => return Err(err),
+        }
+    }
+
+    Ok(())
+}
+
+fn wait_with_stdin_writer<T, W, F>(wait: W, write_stdin: F) -> Result<T, io::Error>
+where
+    T: Send,
+    W: FnOnce() -> Result<T, io::Error> + Send,
+    F: FnOnce() -> Result<(), io::Error>, {
+    thread::scope(|scope| {
+        // Waiting in a scoped thread lets the child drain its stdout and stderr while this thread is still writing stdin.
+        let wait_handle = scope.spawn(wait);
+        let write_result = write_stdin();
+        let wait_result = match wait_handle.join() {
+            Ok(result) => result,
+            Err(_) => Err(io::Error::other("child wait thread panicked")),
+        };
+
+        match write_result {
+            Ok(()) => wait_result,
+            Err(err) => Err(err),
+        }
+    })
+}
+
+fn kill_and_wait_children(mut children: Vec<Child>) {
+    // If pipeline setup fails, terminate every child we already spawned and reap them before returning the setup error.
+    for child in &mut children {
+        let _ = child.kill();
+    }
+
+    for mut child in children {
+        let _ = child.wait();
+    }
+}
+
+fn wait_upstream_children(children: Vec<Child>) -> Result<(), io::Error> {
+    let mut first_error = None;
+
+    for mut child in children {
+        if let Err(err) = child.wait() {
+            if first_error.is_none() {
+                first_error = Some(err);
+            }
+        }
+    }
+
+    match first_error {
+        Some(err) => Err(err),
+        None => Ok(()),
+    }
+}
+
+fn finish_pipeline_result<T>(
+    result: Result<T, io::Error>,
+    upstream_children: Vec<Child>,
+) -> Result<T, io::Error> {
+    // The public result follows normal shell pipeline behavior and comes from the last command, but upstream children still must be reaped.
+    let upstream_result = wait_upstream_children(upstream_children);
+
+    match result {
+        Ok(value) => {
+            upstream_result?;
+
+            Ok(value)
+        },
+        Err(err) => Err(err),
+    }
+}
+
+fn spawn_pipeline(
+    first: &mut Command,
+    others: &mut [&mut Command],
+) -> Result<(Vec<Child>, Child), io::Error> {
+    let mut upstream_children = Vec::with_capacity(others.len());
+    let mut previous_child = first.spawn()?;
+    let last_index = others.len() - 1;
+
+    for other in others.iter_mut().take(last_index) {
+        // Each child becomes upstream as soon as its stdout is moved into the next command's stdin.
+        let stdout = match take_child_stdout(&mut previous_child) {
+            Ok(stdout) => stdout,
+            Err(err) => {
+                upstream_children.push(previous_child);
+                kill_and_wait_children(upstream_children);
+
+                return Err(err);
+            },
+        };
+
+        other.stdin(stdout);
+        other.stdout(Stdio::piped());
+        other.stderr(Stdio::null());
+
+        upstream_children.push(previous_child);
+
+        previous_child = match other.spawn() {
+            Ok(child) => child,
+            Err(err) => {
+                kill_and_wait_children(upstream_children);
+
+                return Err(err);
+            },
+        };
+    }
+
+    let stdout = match take_child_stdout(&mut previous_child) {
+        Ok(stdout) => stdout,
+        Err(err) => {
+            upstream_children.push(previous_child);
+            kill_and_wait_children(upstream_children);
+
+            return Err(err);
+        },
+    };
+
+    let last_other = &mut others[last_index];
+
+    last_other.stdin(stdout);
+    upstream_children.push(previous_child);
+
+    // Keep the last child separate because callers need its status or captured output as the method result.
+    match last_other.spawn() {
+        Ok(last_child) => Ok((upstream_children, last_child)),
+        Err(err) => {
+            kill_and_wait_children(upstream_children);
+
+            Err(err)
+        },
     }
 }
 
@@ -454,10 +609,12 @@ impl Execute for Command {
         self.stderr(Stdio::null());
 
         let mut child = self.spawn()?;
+        let stdin = take_child_stdin(&mut child)?;
 
-        child.stdin.as_mut().unwrap().write_all(data.as_ref())?;
-
-        Ok(child.wait()?.code())
+        wait_with_stdin_writer(
+            move || child.wait().map(|status| status.code()),
+            || write_stdin(stdin, data),
+        )
     }
 
     #[inline]
@@ -468,10 +625,9 @@ impl Execute for Command {
         self.stdin(Stdio::piped());
 
         let mut child = self.spawn()?;
+        let stdin = take_child_stdin(&mut child)?;
 
-        child.stdin.as_mut().unwrap().write_all(data.as_ref())?;
-
-        child.wait_with_output()
+        wait_with_stdin_writer(move || child.wait_with_output(), || write_stdin(stdin, data))
     }
 
     #[inline]
@@ -479,30 +635,17 @@ impl Execute for Command {
         &mut self,
         reader: &mut dyn Read,
     ) -> Result<Option<i32>, io::Error> {
-        check_reader_buffer_size::<N>()?;
-
         self.stdin(Stdio::piped());
         self.stdout(Stdio::null());
         self.stderr(Stdio::null());
 
         let mut child = self.spawn()?;
+        let stdin = take_child_stdin(&mut child)?;
 
-        {
-            let stdin = child.stdin.as_mut().unwrap();
-
-            let mut buffer = [0u8; N];
-
-            loop {
-                match reader.read(&mut buffer) {
-                    Ok(0) => break,
-                    Ok(c) => stdin.write_all(&buffer[0..c])?,
-                    Err(ref err) if err.kind() == ErrorKind::Interrupted => (),
-                    Err(err) => return Err(err),
-                }
-            }
-        }
-
-        Ok(child.wait()?.code())
+        wait_with_stdin_writer(
+            move || child.wait().map(|status| status.code()),
+            || copy_reader_to_stdin::<N>(stdin, reader),
+        )
     }
 
     #[inline]
@@ -510,28 +653,15 @@ impl Execute for Command {
         &mut self,
         reader: &mut dyn Read,
     ) -> Result<Output, io::Error> {
-        check_reader_buffer_size::<N>()?;
-
         self.stdin(Stdio::piped());
 
         let mut child = self.spawn()?;
+        let stdin = take_child_stdin(&mut child)?;
 
-        {
-            let stdin = child.stdin.as_mut().unwrap();
-
-            let mut buffer = [0u8; N];
-
-            loop {
-                match reader.read(&mut buffer) {
-                    Ok(0) => break,
-                    Ok(c) => stdin.write_all(&buffer[0..c])?,
-                    Err(ref err) if err.kind() == ErrorKind::Interrupted => (),
-                    Err(err) => return Err(err),
-                }
-            }
-        }
-
-        child.wait_with_output()
+        wait_with_stdin_writer(
+            move || child.wait_with_output(),
+            || copy_reader_to_stdin::<N>(stdin, reader),
+        )
     }
 
     fn execute_multiple(&mut self, others: &mut [&mut Command]) -> Result<Option<i32>, io::Error> {
@@ -542,25 +672,16 @@ impl Execute for Command {
         self.stdout(Stdio::piped());
         self.stderr(Stdio::null());
 
-        let mut child = self.spawn()?;
-
         let others_length_dec = others.len() - 1;
-
-        for other in others.iter_mut().take(others_length_dec) {
-            other.stdin(child.stdout.unwrap());
-            other.stdout(Stdio::piped());
-            other.stderr(Stdio::null());
-
-            child = other.spawn()?;
-        }
-
         let last_other = &mut others[others_length_dec];
 
-        last_other.stdin(child.stdout.unwrap());
         last_other.stdout(Stdio::null());
         last_other.stderr(Stdio::null());
 
-        Ok(last_other.status()?.code())
+        let (upstream_children, mut last_child) = spawn_pipeline(self, others)?;
+        let status_result = last_child.wait().map(|status| status.code());
+
+        finish_pipeline_result(status_result, upstream_children)
     }
 
     fn execute_multiple_output(
@@ -574,23 +695,10 @@ impl Execute for Command {
         self.stdout(Stdio::piped());
         self.stderr(Stdio::null());
 
-        let mut child = self.spawn()?;
+        let (upstream_children, last_child) = spawn_pipeline(self, others)?;
+        let output_result = last_child.wait_with_output();
 
-        let others_length_dec = others.len() - 1;
-
-        for other in others.iter_mut().take(others_length_dec) {
-            other.stdin(child.stdout.unwrap());
-            other.stdout(Stdio::piped());
-            other.stderr(Stdio::null());
-
-            child = other.spawn()?;
-        }
-
-        let last_other = &mut others[others_length_dec];
-
-        last_other.stdin(child.stdout.unwrap());
-
-        last_other.spawn()?.wait_with_output()
+        finish_pipeline_result(output_result, upstream_children)
     }
 
     fn execute_multiple_input<D: ?Sized + AsRef<[u8]>>(
@@ -606,27 +714,20 @@ impl Execute for Command {
         self.stdout(Stdio::piped());
         self.stderr(Stdio::null());
 
-        let mut child = self.spawn()?;
-
-        child.stdin.as_mut().unwrap().write_all(data.as_ref())?;
-
         let others_length_dec = others.len() - 1;
-
-        for other in others.iter_mut().take(others_length_dec) {
-            other.stdin(child.stdout.unwrap());
-            other.stdout(Stdio::piped());
-            other.stderr(Stdio::null());
-
-            child = other.spawn()?;
-        }
-
         let last_other = &mut others[others_length_dec];
 
-        last_other.stdin(child.stdout.unwrap());
         last_other.stdout(Stdio::null());
         last_other.stderr(Stdio::null());
 
-        Ok(last_other.status()?.code())
+        let (mut upstream_children, mut last_child) = spawn_pipeline(self, others)?;
+        let stdin = take_child_stdin(&mut upstream_children[0])?;
+        let status_result = wait_with_stdin_writer(
+            move || last_child.wait().map(|status| status.code()),
+            || write_stdin(stdin, data),
+        );
+
+        finish_pipeline_result(status_result, upstream_children)
     }
 
     fn execute_multiple_input_output<D: ?Sized + AsRef<[u8]>>(
@@ -642,25 +743,14 @@ impl Execute for Command {
         self.stdout(Stdio::piped());
         self.stderr(Stdio::null());
 
-        let mut child = self.spawn()?;
+        let (mut upstream_children, last_child) = spawn_pipeline(self, others)?;
+        let stdin = take_child_stdin(&mut upstream_children[0])?;
+        let output_result = wait_with_stdin_writer(
+            move || last_child.wait_with_output(),
+            || write_stdin(stdin, data),
+        );
 
-        child.stdin.as_mut().unwrap().write_all(data.as_ref())?;
-
-        let others_length_dec = others.len() - 1;
-
-        for other in others.iter_mut().take(others_length_dec) {
-            other.stdin(child.stdout.unwrap());
-            other.stdout(Stdio::piped());
-            other.stderr(Stdio::null());
-
-            child = other.spawn()?;
-        }
-
-        let last_other = &mut others[others_length_dec];
-
-        last_other.stdin(child.stdout.unwrap());
-
-        last_other.spawn()?.wait_with_output()
+        finish_pipeline_result(output_result, upstream_children)
     }
 
     fn execute_multiple_input_reader2<const N: usize>(
@@ -668,8 +758,6 @@ impl Execute for Command {
         reader: &mut dyn Read,
         others: &mut [&mut Command],
     ) -> Result<Option<i32>, io::Error> {
-        check_reader_buffer_size::<N>()?;
-
         if others.is_empty() {
             return self.execute_input_reader2::<N>(reader);
         }
@@ -678,40 +766,20 @@ impl Execute for Command {
         self.stdout(Stdio::piped());
         self.stderr(Stdio::null());
 
-        let mut child = self.spawn()?;
-
-        {
-            let stdin = child.stdin.as_mut().unwrap();
-
-            let mut buffer = [0u8; N];
-
-            loop {
-                match reader.read(&mut buffer) {
-                    Ok(0) => break,
-                    Ok(c) => stdin.write_all(&buffer[0..c])?,
-                    Err(ref err) if err.kind() == ErrorKind::Interrupted => (),
-                    Err(err) => return Err(err),
-                }
-            }
-        }
-
         let others_length_dec = others.len() - 1;
-
-        for other in others.iter_mut().take(others_length_dec) {
-            other.stdin(child.stdout.unwrap());
-            other.stdout(Stdio::piped());
-            other.stderr(Stdio::null());
-
-            child = other.spawn()?;
-        }
-
         let last_other = &mut others[others_length_dec];
 
-        last_other.stdin(child.stdout.unwrap());
         last_other.stdout(Stdio::null());
         last_other.stderr(Stdio::null());
 
-        Ok(last_other.status()?.code())
+        let (mut upstream_children, mut last_child) = spawn_pipeline(self, others)?;
+        let stdin = take_child_stdin(&mut upstream_children[0])?;
+        let status_result = wait_with_stdin_writer(
+            move || last_child.wait().map(|status| status.code()),
+            || copy_reader_to_stdin::<N>(stdin, reader),
+        );
+
+        finish_pipeline_result(status_result, upstream_children)
     }
 
     fn execute_multiple_input_reader_output2<const N: usize>(
@@ -719,8 +787,6 @@ impl Execute for Command {
         reader: &mut dyn Read,
         others: &mut [&mut Command],
     ) -> Result<Output, io::Error> {
-        check_reader_buffer_size::<N>()?;
-
         if others.is_empty() {
             return self.execute_input_reader_output2::<N>(reader);
         }
@@ -729,38 +795,14 @@ impl Execute for Command {
         self.stdout(Stdio::piped());
         self.stderr(Stdio::null());
 
-        let mut child = self.spawn()?;
+        let (mut upstream_children, last_child) = spawn_pipeline(self, others)?;
+        let stdin = take_child_stdin(&mut upstream_children[0])?;
+        let output_result = wait_with_stdin_writer(
+            move || last_child.wait_with_output(),
+            || copy_reader_to_stdin::<N>(stdin, reader),
+        );
 
-        {
-            let stdin = child.stdin.as_mut().unwrap();
-
-            let mut buffer = [0u8; N];
-
-            loop {
-                match reader.read(&mut buffer) {
-                    Ok(0) => break,
-                    Ok(c) => stdin.write_all(&buffer[0..c])?,
-                    Err(ref err) if err.kind() == ErrorKind::Interrupted => (),
-                    Err(err) => return Err(err),
-                }
-            }
-        }
-
-        let others_length_dec = others.len() - 1;
-
-        for other in others.iter_mut().take(others_length_dec) {
-            other.stdin(child.stdout.unwrap());
-            other.stdout(Stdio::piped());
-            other.stderr(Stdio::null());
-
-            child = other.spawn()?;
-        }
-
-        let last_other = &mut others[others_length_dec];
-
-        last_other.stdin(child.stdout.unwrap());
-
-        last_other.spawn()?.wait_with_output()
+        finish_pipeline_result(output_result, upstream_children)
     }
 }
 

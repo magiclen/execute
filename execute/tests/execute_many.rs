@@ -7,6 +7,8 @@ use std::{
 
 use execute::Execute;
 
+const LARGE_INPUT_SIZE: usize = 1024 * 1024;
+
 #[test]
 fn execute_multiple() {
     let mut command1 = Command::new("echo");
@@ -24,6 +26,14 @@ fn execute_multiple() {
     command3.arg("d");
 
     assert_ne!(0, command1.execute_multiple(&mut [&mut command3]).unwrap().unwrap());
+}
+
+#[test]
+fn execute_multiple_returns_last_exit_code() {
+    let mut command1 = Command::new("false");
+    let mut command2 = Command::new("true");
+
+    assert_eq!(Some(0), command1.execute_multiple(&mut [&mut command2]).unwrap());
 }
 
 #[test]
@@ -58,6 +68,14 @@ fn execute_multiple_input() {
 }
 
 #[test]
+fn execute_multiple_input_cat_pipeline() {
+    let mut command1 = Command::new("cat");
+    let mut command2 = Command::new("cat");
+
+    assert_eq!(Some(0), command1.execute_multiple_input("abc\n", &mut [&mut command2]).unwrap());
+}
+
+#[test]
 fn execute_multiple_input_output() {
     let mut command1 = Command::new("bc");
 
@@ -72,6 +90,19 @@ fn execute_multiple_input_output() {
         .unwrap();
 
     assert_eq!(b"2\n", output.stdout.as_slice());
+}
+
+#[test]
+fn execute_multiple_input_output_cat_pipeline() {
+    let mut command1 = Command::new("cat");
+    let mut command2 = Command::new("cat");
+
+    command2.stdout(Stdio::piped());
+
+    let data = vec![b'a'; LARGE_INPUT_SIZE];
+    let output = command1.execute_multiple_input_output(&data, &mut [&mut command2]).unwrap();
+
+    assert_eq!(data, output.stdout);
 }
 
 #[test]
