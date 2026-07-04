@@ -172,7 +172,6 @@ For example, to change the buffer size to 4096 bytes,
 use std::process::{Command, Stdio};
 use std::fs::File;
 
-use execute::generic_array::typenum::U4096;
 use execute::Execute;
 
 let mut cat_command = Command::new("cat");
@@ -181,7 +180,7 @@ cat_command.stdout(Stdio::piped());
 
 let mut file = File::open("Cargo.toml").unwrap();
 
-let output = cat_command.execute_input_reader_output2::<U4096>(&mut file).unwrap();
+let output = cat_command.execute_input_reader_output2::<4096>(&mut file).unwrap();
 
 println!("{}", String::from_utf8(output.stdout).unwrap());
 ```

@@ -1,7 +1,7 @@
 #![cfg(target_os = "linux")]
 
 use std::{
-    io::Cursor,
+    io::{Cursor, ErrorKind},
     process::{Command, Stdio},
 };
 
@@ -80,4 +80,28 @@ fn execute_input_reader_output() {
     let output = command.execute_input_reader_output(&mut reader).unwrap();
 
     assert_eq!(b"2\n", output.stdout.as_slice());
+}
+
+#[test]
+fn execute_input_reader_output_with_const_buffer_size() {
+    let mut command = Command::new("cat");
+
+    command.stdout(Stdio::piped());
+
+    let mut reader = Cursor::new("abc");
+
+    let output = command.execute_input_reader_output2::<4096>(&mut reader).unwrap();
+
+    assert_eq!(b"abc", output.stdout.as_slice());
+}
+
+#[test]
+fn execute_input_reader_rejects_zero_buffer_size() {
+    let mut command = Command::new("cat");
+
+    let mut reader = Cursor::new("abc");
+
+    let err = command.execute_input_reader2::<0>(&mut reader).unwrap_err();
+
+    assert_eq!(ErrorKind::InvalidInput, err.kind());
 }

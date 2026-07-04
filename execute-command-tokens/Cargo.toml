@@ -1,14 +1,14 @@
 [package]
 name = "execute-command-tokens"
-version = "0.1.9"
+version = "0.3.0"
 authors = ["Magic Len <len@magiclen.org>"]
-edition = "2021"
-rust-version = "1.80"
+edition = "2024"
+rust-version = "1.85"
 repository = "https://github.com/magiclen/execute"
 homepage = "https://magiclen.org/execute"
 keywords = ["execute", "command"]
 categories = ["parser-implementations"]
-description= "Parse command strings."
+description = "Parse command strings."
 license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 

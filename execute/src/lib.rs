@@ -174,7 +174,6 @@ For example, to change the buffer size to 4096 bytes,
 use std::process::{Command, Stdio};
 use std::fs::File;
 
-use execute::generic_array::typenum::U4096;
 use execute::Execute;
 
 # if cfg!(target_os = "linux") {
@@ -184,7 +183,7 @@ cat_command.stdout(Stdio::piped());
 
 let mut file = File::open("Cargo.toml").unwrap();
 
-let output = cat_command.execute_input_reader_output2::<U4096>(&mut file).unwrap();
+let output = cat_command.execute_input_reader_output2::<4096>(&mut file).unwrap();
 
 println!("{}", String::from_utf8(output.stdout).unwrap());
 # }
@@ -296,8 +295,6 @@ println!("{}", String::from_utf8(output.stdout).unwrap());
 ```
 */
 
-pub extern crate generic_array;
-
 #[cfg(unix)]
 use std::{env, ffi::OsString};
 use std::{
@@ -308,10 +305,17 @@ use std::{
 
 pub use execute_command_macro::{command, command_args};
 use execute_command_tokens::command_tokens;
-use generic_array::{
-    typenum::{IsGreaterOrEqual, True, U1, U256},
-    ArrayLength, GenericArray,
-};
+
+const DEFAULT_READER_BUFFER_SIZE: usize = 256;
+
+#[inline]
+fn check_reader_buffer_size<const N: usize>() -> Result<(), io::Error> {
+    if N == 0 {
+        Err(io::Error::new(ErrorKind::InvalidInput, "reader buffer size must be greater than zero"))
+    } else {
+        Ok(())
+    }
+}
 
 pub trait Execute {
     /// Execute this command and get the exit status code. stdout and stderr will be set to `Stdio::null()`. By default, stdin is inherited from the parent.
@@ -347,11 +351,11 @@ pub trait Execute {
     /// Execute this command and input data from a reader to the process. stdin will be set to `Stdio::piped()`. stdout and stderr will be set to `Stdio::null()`.
     #[inline]
     fn execute_input_reader(&mut self, reader: &mut dyn Read) -> Result<Option<i32>, io::Error> {
-        self.execute_input_reader2::<U256>(reader)
+        self.execute_input_reader2::<DEFAULT_READER_BUFFER_SIZE>(reader)
     }
 
     /// Execute this command and input data from a reader to the process. stdin will be set to `Stdio::piped()`. stdout and stderr will be set to `Stdio::null()`.
-    fn execute_input_reader2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_input_reader2<const N: usize>(
         &mut self,
         reader: &mut dyn Read,
     ) -> Result<Option<i32>, io::Error>;
@@ -359,11 +363,11 @@ pub trait Execute {
     /// Execute this command and input data from a reader to the process. stdin will be set to `Stdio::piped()`. By default, stdout and stderr are inherited from the parent.
     #[inline]
     fn execute_input_reader_output(&mut self, reader: &mut dyn Read) -> Result<Output, io::Error> {
-        self.execute_input_reader_output2::<U256>(reader)
+        self.execute_input_reader_output2::<DEFAULT_READER_BUFFER_SIZE>(reader)
     }
 
     /// Execute this command and input data from a reader to the process. stdin will be set to `Stdio::piped()`. By default, stdout and stderr are inherited from the parent.
-    fn execute_input_reader_output2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_input_reader_output2<const N: usize>(
         &mut self,
         reader: &mut dyn Read,
     ) -> Result<Output, io::Error>;
@@ -375,7 +379,7 @@ pub trait Execute {
 
     /// Execute this command as well as other commands and pipe their stdin and stdout. By default, the stdin of the first process, the stdout and stderr of the last process are inherited from the parent.
     fn execute_multiple_output(&mut self, others: &mut [&mut Command])
-        -> Result<Output, io::Error>;
+    -> Result<Output, io::Error>;
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input in-memory data to the process, and get the exit status code. The stdin of the first process will be set to `Stdio::piped()`. The stdout and stderr of the last process will be set to `Stdio::null()`.
     fn execute_multiple_input<D: ?Sized + AsRef<[u8]>>(
@@ -398,11 +402,11 @@ pub trait Execute {
         reader: &mut dyn Read,
         others: &mut [&mut Command],
     ) -> Result<Option<i32>, io::Error> {
-        self.execute_multiple_input_reader2::<U256>(reader, others)
+        self.execute_multiple_input_reader2::<DEFAULT_READER_BUFFER_SIZE>(reader, others)
     }
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input data from a reader to the process, and get the exit status code. The stdin of the first process will be set to `Stdio::piped()`. The stdout and stderr of the last process will be set to `Stdio::null()`.
-    fn execute_multiple_input_reader2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_multiple_input_reader2<const N: usize>(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
@@ -415,11 +419,11 @@ pub trait Execute {
         reader: &mut dyn Read,
         others: &mut [&mut Command],
     ) -> Result<Output, io::Error> {
-        self.execute_multiple_input_reader_output2::<U256>(reader, others)
+        self.execute_multiple_input_reader_output2::<DEFAULT_READER_BUFFER_SIZE>(reader, others)
     }
 
     /// Execute this command as well as other commands and pipe their stdin and stdout, and input data from a reader to the process. The stdin of the first process will be set to `Stdio::piped()`. By default, the stdout and stderr of the last process are inherited from the parent.
-    fn execute_multiple_input_reader_output2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_multiple_input_reader_output2<const N: usize>(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
@@ -471,10 +475,12 @@ impl Execute for Command {
     }
 
     #[inline]
-    fn execute_input_reader2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_input_reader2<const N: usize>(
         &mut self,
         reader: &mut dyn Read,
     ) -> Result<Option<i32>, io::Error> {
+        check_reader_buffer_size::<N>()?;
+
         self.stdin(Stdio::piped());
         self.stdout(Stdio::null());
         self.stderr(Stdio::null());
@@ -484,7 +490,7 @@ impl Execute for Command {
         {
             let stdin = child.stdin.as_mut().unwrap();
 
-            let mut buffer: GenericArray<u8, N> = GenericArray::default();
+            let mut buffer = [0u8; N];
 
             loop {
                 match reader.read(&mut buffer) {
@@ -500,10 +506,12 @@ impl Execute for Command {
     }
 
     #[inline]
-    fn execute_input_reader_output2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_input_reader_output2<const N: usize>(
         &mut self,
         reader: &mut dyn Read,
     ) -> Result<Output, io::Error> {
+        check_reader_buffer_size::<N>()?;
+
         self.stdin(Stdio::piped());
 
         let mut child = self.spawn()?;
@@ -511,7 +519,7 @@ impl Execute for Command {
         {
             let stdin = child.stdin.as_mut().unwrap();
 
-            let mut buffer: GenericArray<u8, N> = GenericArray::default();
+            let mut buffer = [0u8; N];
 
             loop {
                 match reader.read(&mut buffer) {
@@ -655,11 +663,13 @@ impl Execute for Command {
         last_other.spawn()?.wait_with_output()
     }
 
-    fn execute_multiple_input_reader2<N: ArrayLength + IsGreaterOrEqual<U1, Output = True>>(
+    fn execute_multiple_input_reader2<const N: usize>(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
     ) -> Result<Option<i32>, io::Error> {
+        check_reader_buffer_size::<N>()?;
+
         if others.is_empty() {
             return self.execute_input_reader2::<N>(reader);
         }
@@ -673,7 +683,7 @@ impl Execute for Command {
         {
             let stdin = child.stdin.as_mut().unwrap();
 
-            let mut buffer: GenericArray<u8, N> = GenericArray::default();
+            let mut buffer = [0u8; N];
 
             loop {
                 match reader.read(&mut buffer) {
@@ -704,13 +714,13 @@ impl Execute for Command {
         Ok(last_other.status()?.code())
     }
 
-    fn execute_multiple_input_reader_output2<
-        N: ArrayLength + IsGreaterOrEqual<U1, Output = True>,
-    >(
+    fn execute_multiple_input_reader_output2<const N: usize>(
         &mut self,
         reader: &mut dyn Read,
         others: &mut [&mut Command],
     ) -> Result<Output, io::Error> {
+        check_reader_buffer_size::<N>()?;
+
         if others.is_empty() {
             return self.execute_input_reader_output2::<N>(reader);
         }
@@ -724,7 +734,7 @@ impl Execute for Command {
         {
             let stdin = child.stdin.as_mut().unwrap();
 
-            let mut buffer: GenericArray<u8, N> = GenericArray::default();
+            let mut buffer = [0u8; N];
 
             loop {
                 match reader.read(&mut buffer) {

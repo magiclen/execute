@@ -1,9 +1,9 @@
 [package]
 name = "execute-command-macro"
-version = "0.1.11"
-rust-version = "1.80"
+version = "0.3.0"
 authors = ["Magic Len <len@magiclen.org>"]
-edition = "2021"
+edition = "2024"
+rust-version = "1.85"
 repository = "https://github.com/magiclen/execute"
 homepage = "https://magiclen.org/execute"
 keywords = ["execute", "command"]
@@ -13,4 +13,4 @@ license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
-execute-command-macro-impl = { version = "0.1", path = "../execute-command-macro-impl" }
+execute-command-macro-impl = { version = "0.3.0", path = "../execute-command-macro-impl" }

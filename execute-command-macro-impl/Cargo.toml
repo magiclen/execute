@@ -1,9 +1,9 @@
 [package]
 name = "execute-command-macro-impl"
-version = "0.1.12"
+version = "0.3.0"
 authors = ["Magic Len <len@magiclen.org>"]
-edition = "2021"
-rust-version = "1.80"
+edition = "2024"
+rust-version = "1.85"
 repository = "https://github.com/magiclen/execute"
 homepage = "https://magiclen.org/execute"
 keywords = ["execute", "command"]
@@ -16,7 +16,7 @@ include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 proc-macro = true
 
 [dependencies]
-execute-command-tokens = { version = "0.1", path = "../execute-command-tokens" }
+execute-command-tokens = { version = "0.3.0", path = "../execute-command-tokens" }
 
 syn = "2"
 quote = "1"

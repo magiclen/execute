@@ -7,7 +7,7 @@ See [`execute-command-macro`](https://crates.io/crates/execute-command-macro).
 use execute_command_tokens::command_tokens;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, LitStr};
+use syn::{LitStr, parse_macro_input};
 
 #[proc_macro]
 pub fn command(input: TokenStream) -> TokenStream {
