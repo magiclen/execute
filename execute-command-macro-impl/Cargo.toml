@@ -18,5 +18,5 @@ proc-macro = true
 [dependencies]
 execute-command-tokens = { version = "0.3", path = "../execute-command-tokens" }
 
-syn = { version = "2", default-features = false, features = ["parsing", "proc-macro"] }
-quote = "1.0.25"
+syn = { version = "3", default-features = false, features = ["parsing", "proc-macro"] }
+quote = "1.0.35"
